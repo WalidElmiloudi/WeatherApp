@@ -52,7 +52,7 @@ function App() {
       <header className="mb-8 text-center animate-in">
         <div className="flex items-center justify-center gap-3 mb-2">
           <CloudRainWind size={32} className="text-secondary" />
-          <h1 className="text-3xl font-bold title-gradient">SkyCast</h1>
+          <h1 className="text-3xl font-bold title-gradient">WeatherApp</h1>
         </div>
         <p className="text-text-muted">Premium Weather Tracking</p>
       </header>
