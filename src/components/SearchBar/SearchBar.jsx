@@ -8,6 +8,18 @@ const SearchBar = ({ onLocationSelect }) => {
   const [results, setResults] = useState([]);
   const [showResults, setShowResults] = useState(false);
   const searchTimeout = useRef(null);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setShowResults(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     if (query.trim().length > 2) {
@@ -28,7 +40,7 @@ const SearchBar = ({ onLocationSelect }) => {
   }, [query]);
 
   return (
-    <div className="search-container">
+    <div className="search-container" ref={containerRef}>
       <div className="search-input-wrapper glass">
         <Search className="search-icon" size={20} />
         <input
