@@ -1,121 +1,89 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import React, { useState, useEffect } from 'react';
+import { fetchWeatherData } from './api/weatherService';
+import SearchBar from './components/SearchBar/SearchBar';
+import WeatherCard from './components/WeatherCard/WeatherCard';
+import Forecast from './components/Forecast/Forecast';
+import WeatherDetails from './components/WeatherDetails/WeatherDetails';
+import { CloudRainWind } from 'lucide-react';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [weatherData, setWeatherData] = useState(null);
+  const [locationName, setLocationName] = useState('London');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const loadWeather = async (lat, lon, name) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchWeatherData(lat, lon);
+      setWeatherData(data);
+      if (name) setLocationName(name);
+    } catch (err) {
+      setError('Failed to load weather data. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // Initial load - Default to London
+    loadWeather(51.5074, -0.1278, 'London');
+    
+    // Optional: Try to get user location
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          loadWeather(position.coords.latitude, position.coords.longitude, 'Your Location');
+        },
+        (err) => {
+          console.log('Location access denied');
+        }
+      );
+    }
+  }, []);
+
+  const handleLocationSelect = (loc) => {
+    loadWeather(loc.latitude, loc.longitude, loc.name);
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <div className="App w-full flex flex-col items-center">
+      <header className="mb-8 text-center animate-in">
+        <div className="flex items-center justify-center gap-3 mb-2">
+          <CloudRainWind size={32} className="text-secondary" />
+          <h1 className="text-3xl font-bold title-gradient">SkyCast</h1>
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+        <p className="text-text-muted">Premium Weather Tracking</p>
+      </header>
 
-      <div className="ticks"></div>
+      <SearchBar onLocationSelect={handleLocationSelect} />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+      {loading ? (
+        <div className="flex items-center justify-center p-20">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
+      ) : error ? (
+        <div className="glass p-6 text-accent text-center w-full max-w-md">
+          {error}
         </div>
-      </section>
+      ) : (
+        <div className="w-full space-y-8 max-w-5xl">
+          <div className="flex justify-center">
+            <WeatherCard weatherData={weatherData} locationName={locationName} />
+          </div>
+          
+          <WeatherDetails weatherData={weatherData} />
+          
+          <Forecast forecastData={weatherData} />
+        </div>
+      )}
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      <footer className="mt-12 text-sm text-text-muted pb-8">
+        Built with React & Open-Meteo
+      </footer>
+    </div>
+  );
 }
 
-export default App
+export default App;
